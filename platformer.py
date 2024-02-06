@@ -12,9 +12,10 @@ exitStatus = False
 # ----CONSTANTS----
 
 # Map stuff
-backgroundCanvasColour = (0, 0, 255)
 mapLayout = pg.image.load("images/pacman_map.png")
 mapPosition = (0, 0)
+
+# Drawing the inital map rects
 
 # Entities
 pacman_right_original = pg.image.load("images/pacman_right.png")
@@ -27,6 +28,7 @@ playerStartingPosition = (215, 276)
 Player_X_Pos = 215
 Player_Y_Pos = 276
 CurrentPacman = pacman_left
+pacman_length = 31 
 
 x_change = 0
 y_change = 0
@@ -60,14 +62,25 @@ def check_entities(x_pos, y_pos, fruits, f_bools):
         fruit_index += 1
     return None
 
+def check_wall_collisions(Player_X_Pos, Player_Y_Pos, x_change, y_change, wall):
+    # Moving right
+    if x_change > 0:
+        collide = wall.collidepoint((Player_X_Pos + pacman_length, Player_Y_Pos))
+        if collide:
+            x_change = 0
+
+    return (x_change, y_change)
+
 while not exitStatus:
 
     # Setting backround
-    canvas.fill(backgroundCanvasColour)
     canvas.blit(mapLayout, mapPosition)
 
     # Player Draw
     canvas.blit(CurrentPacman, (Player_X_Pos, Player_Y_Pos))
+
+
+    wall_rect = pg.draw.rect(canvas, (255, 0, 0), pg.Rect(319, 262, 13, 58))
 
     # Game Events
     events = pg.event.get()
@@ -97,9 +110,12 @@ while not exitStatus:
                 y_change = 1
                 CurrentPacman = pacman_down
 
+    # Checking wall collisions
+    (new_x_change, new_y_change) = check_wall_collisions(Player_X_Pos, Player_Y_Pos, x_change, y_change, wall_rect)
+
     # Updating the movement
-    Player_X_Pos += x_change
-    Player_Y_Pos += y_change
+    Player_X_Pos += new_x_change
+    Player_Y_Pos += new_y_change
 
     # Checking Ghost and Fruit
     check_entities(Player_X_Pos, Player_Y_Pos, fruits, fruits_bools)
