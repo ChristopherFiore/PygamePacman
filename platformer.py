@@ -14,8 +14,10 @@ exitStatus = False
 # Map stuff
 mapLayout = pg.image.load("images/pacman_map.png")
 mapPosition = (0, 0)
+human_error_length = 5
 
 # Drawing the inital map rects
+walls = [pg.Rect(319, 262, 13, 58), pg.Rect(319, 118, 13, 104), pg.Rect(126, 262, 13, 58), pg.Rect(126, 118, 13, 104)]
 
 # Entities
 pacman_right_original = pg.image.load("images/pacman_right.png")
@@ -38,13 +40,30 @@ fruit_img = pg.image.load("images/fruit.png")
 black_img = pg.image.load("images/black_pixel.png")
 fruit_final_img = pg.transform.scale(fruit_img, (10, 10))
 black_image_final = pg.transform.scale(black_img, (10, 10))
-fruits = [(270, 285)]
-fruits_bools = [True]
+fruits = [(270, 285), (250, 285)]
+fruits_bools = [True, True]
 
 # Clock
 clock = pg.time.Clock()
 
 # FUNCTIONS
+
+# draw_initial_walls()
+# ----------------------
+# draws pygame Rect objects for every wall in the map
+# 
+# returns: None
+def draw_initial_walls(walls):
+    for wall in walls:
+        pg.draw.rect(canvas, (255, 0, 0), wall)
+    return None
+
+# check_entities()
+#--------------------
+# Checks for collisions between the player and fruit on the map
+# Also redraws the fruit
+#
+# returns None
 def check_entities(x_pos, y_pos, fruits, f_bools):
     # Checking if colliding with fruit
     index = 0
@@ -62,12 +81,29 @@ def check_entities(x_pos, y_pos, fruits, f_bools):
         fruit_index += 1
     return None
 
-def check_wall_collisions(Player_X_Pos, Player_Y_Pos, x_change, y_change, wall):
+# check_wall_coliisions
+# ------------------------
+# Cheks colliions with the player against map walls and adjusts the new position
+# of the character if the player runs into the wall
+# 
+# returns: new_x, new_y
+def check_wall_collisions(Player_X_Pos, Player_Y_Pos, x_change, y_change, walls):
     # Moving right
     if x_change > 0:
-        collide = wall.collidepoint((Player_X_Pos + pacman_length, Player_Y_Pos))
-        if collide:
-            x_change = 0
+        for wall in walls:
+            # Passing above wall
+            collidePAbove = wall.collidepoint((Player_X_Pos + pacman_length, Player_Y_Pos + pacman_length - human_error_length))
+            # Passing below wall
+            collidePBelow = wall.collidepoint((Player_X_Pos + pacman_length, Player_Y_Pos))
+            if collidePAbove or collidePBelow:
+                x_change = 0
+    
+    # Moving left
+    if x_change < 0:
+        for wall in walls:
+            collide = wall.collidepoint((Player_X_Pos - 4, Player_Y_Pos))
+            if collide:
+                x_change = 0
 
     return (x_change, y_change)
 
@@ -76,11 +112,10 @@ while not exitStatus:
     # Setting backround
     canvas.blit(mapLayout, mapPosition)
 
+    draw_initial_walls(walls)
+
     # Player Draw
     canvas.blit(CurrentPacman, (Player_X_Pos, Player_Y_Pos))
-
-
-    wall_rect = pg.draw.rect(canvas, (255, 0, 0), pg.Rect(319, 262, 13, 58))
 
     # Game Events
     events = pg.event.get()
@@ -111,7 +146,7 @@ while not exitStatus:
                 CurrentPacman = pacman_down
 
     # Checking wall collisions
-    (new_x_change, new_y_change) = check_wall_collisions(Player_X_Pos, Player_Y_Pos, x_change, y_change, wall_rect)
+    (new_x_change, new_y_change) = check_wall_collisions(Player_X_Pos, Player_Y_Pos, x_change, y_change, walls)
 
     # Updating the movement
     Player_X_Pos += new_x_change
